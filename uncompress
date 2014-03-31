@@ -1,0 +1,35 @@
+#!/bin/bash
+
+function Usage
+{
+    basename=$(basename $1)
+    echo "$basename filename dir" >&2
+    exit -1
+}
+
+[[ ! -f $1 ]] && Usage $0;
+
+filename=$1
+dir=$2
+intro=$(file -b $filename)
+
+if [[ "$dir" != "" ]]; then
+    [[ -f "$dir" ]] && Usage $0;
+    mkdir -p $dir
+else
+    dir="."
+fi
+
+shift 1
+
+if [[ "$intro" == "bzip2 compressed data"* ]]; then
+    CMD=" tar -jx -f $filename -C $dir"
+elif [[ "$intro" == "gzip compressed data"* ]]; then
+    CMD=" tar -ax -f $filename -C $dir"
+elif [[ "$intro" == "POSIX tar archive"* ]]; then
+    CMD=" tar -x -f $filename -C $dir"
+elif [[ "$intro" == "Zip archive data"* ]]; then
+    CMD=" unzip -o $filename -d $dir"
+fi
+
+[[ "" != "$CMD" ]] && eval "$CMD > /dev/null"
